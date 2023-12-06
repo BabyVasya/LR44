@@ -14,11 +14,11 @@ import java.util.Map;
 public class JadeStarter {
     public static void main(String[] args) {
         Map<String, Class<?>> agents = Map.of(
-                "AgentConsumerTransport", AgentConsumer.class,
+                "AgentTransportConsumer", AgentConsumer.class,
                 "AgentDistributer1", AgentDistributer.class,
-                "AgentProducerTEC", AgentProducer.class,
-                "AgentProducerSEC", AgentProducer.class,
-                "AgentProducerVES", AgentProducer.class
+                "AgentTECProducer", AgentProducer.class,
+                "AgentSECProducer", AgentProducer.class,
+                "AgentVESProducer", AgentProducer.class
         );
         ProfileImpl p = createProperties(agents);
         startPlatfrom(p);

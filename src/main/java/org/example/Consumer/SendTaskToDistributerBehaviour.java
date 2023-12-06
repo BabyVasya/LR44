@@ -8,10 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.VirtualTime;
 @Slf4j
 public class SendTaskToDistributerBehaviour extends Behaviour {
-    private CfgGraphic cfgGraphic;
+    private CfgConsumerGraphic cfgGraphic;
     private Gson gson = new Gson();
 
-    public SendTaskToDistributerBehaviour(CfgGraphic cfg){
+    public SendTaskToDistributerBehaviour(CfgConsumerGraphic cfg){
         this.cfgGraphic = cfg;
     }
     @Override

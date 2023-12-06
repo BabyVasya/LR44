@@ -1,4 +1,4 @@
-package org.example.Distributer;
+package org.example.Distributer.AuctionDFSMSubbeh;
 
 import com.google.gson.Gson;
 import jade.core.AID;
@@ -6,16 +6,29 @@ import jade.core.behaviours.Behaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import lombok.extern.slf4j.Slf4j;
-import org.example.Consumer.CfgGraphic;
 import org.example.Consumer.SendTaskDto;
 import org.example.DfHelper;
+import org.example.Distributer.AuctionDistributerFSM;
 import org.example.TopicHelper;
 
 import java.util.List;
 
 @Slf4j
 public class ReceiveTaskAndStartAuction extends Behaviour {
-    Gson gson = new Gson();
+    private Gson gson = new Gson();
+
+    private String topicName;
+    private AID topic;
+    private boolean end;
+
+    public ReceiveTaskAndStartAuction(String topicName) {
+        this.topicName = topicName;
+    }
+
+    @Override
+    public void onStart() {
+        topic = TopicHelper.register(myAgent, this.topicName);
+    }
     @Override
     public void action() {
         ACLMessage taskFromConsumer = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
@@ -38,16 +51,17 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
         return gson.fromJson(taskFromConsumer.getContent(), SendTaskDto.class);
     }
     private void startAuction(SendTaskDto task) {
-        ACLMessage initiateAuctionMsg = new ACLMessage(ACLMessage.INFORM);
+        ACLMessage initiateAuctionMsg = new ACLMessage(ACLMessage.PROPOSE);
+        topic = TopicHelper.register(myAgent, topicName);
         List<AID> producers = DfHelper.search(myAgent, "Producer");
-        initiateAuctionMsg.setContent(gson.toJson(task));
+        initiateAuctionMsg.setContent(gson.toJson(task) + topic);
         if (!producers.isEmpty()) {
             for (AID producer : producers) {
                 initiateAuctionMsg.addReceiver(new AID(producer.getLocalName(), false));
             }
-            log.info(initiateAuctionMsg.getContent() );
-            TopicHelper.register(myAgent, "Auction");
+            log.info(initiateAuctionMsg +"" );
             getAgent().send(initiateAuctionMsg);
+            myAgent.addBehaviour(new MakingDesicion("Auction"));
         } else {
             log.info("There are no producers " + producers);
         }

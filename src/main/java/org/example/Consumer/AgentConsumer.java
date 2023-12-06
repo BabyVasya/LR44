@@ -1,31 +1,34 @@
 package org.example.Consumer;
 
 import jade.core.Agent;
-import org.example.VirtualTime;
+import lombok.extern.slf4j.Slf4j;
+import org.example.Producer.CfgProduceGraphic;
+import org.example.ReadConsumerConfigInterface;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
 
-public class AgentConsumer extends Agent {
+
+@Slf4j
+public class AgentConsumer extends Agent implements ReadConsumerConfigInterface {
     @Override
     protected void setup() {
-        addBehaviour(new SendTaskToDistributerBehaviour(cfgGraphicReading(getLocalName())));
+        addBehaviour(new SendTaskToDistributerBehaviour(readConfigConsumer(getLocalName())));
     }
 
-    private CfgGraphic cfgGraphicReading(String agentConsumerName) {
-        CfgGraphic cfgGraphic = null;
+    @Override
+    public CfgConsumerGraphic readConfigConsumer(String agentLocalName) {
+        CfgConsumerGraphic cfgGraphic = null;
         {
             try {
                 JAXBContext context =
-                        JAXBContext.newInstance(CfgGraphic.class);
+                        JAXBContext.newInstance(CfgConsumerGraphic.class);
                 Unmarshaller jaxbUnmarshaller = context.createUnmarshaller();
-                switch (getLocalName()) {
-                    case "AgentConsumerTransport":
-                        cfgGraphic = (CfgGraphic) jaxbUnmarshaller.unmarshal(new
-                                File("src/main/resources/transportConsumerGraph.xml"));
-                }
+                cfgGraphic = (CfgConsumerGraphic) jaxbUnmarshaller.unmarshal(new
+                        File("src/main/resources/" + agentLocalName.split("Agent")[1] + "Graph.xml"));
+
             } catch (JAXBException e) {
                 throw new RuntimeException(e);
             }

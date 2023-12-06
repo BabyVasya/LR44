@@ -1,12 +1,40 @@
 package org.example.Producer;
 
 import jade.core.Agent;
+import lombok.extern.slf4j.Slf4j;
+import org.example.Consumer.CfgConsumerGraphic;
 import org.example.DfHelper;
+import org.example.ReadProducerConfigInterface;
 
-public class AgentProducer extends Agent {
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.File;
+
+@Slf4j
+public class AgentProducer extends Agent implements ReadProducerConfigInterface {
     @Override
     protected void setup() {
         DfHelper.register(this, "Producer");
-        addBehaviour(new AuctionProducerFSM());
+        addBehaviour(new AuctionProducerFSM("Auction"));
+    }
+
+    @Override
+    public CfgProduceGraphic readConfigProducer(String agentLocalName) {
+        CfgProduceGraphic cfgGraphic = null;
+        {log.info("src/main/resources/" + agentLocalName.split("Agent")[1] + "Graphic.xml");
+            try {
+                JAXBContext context =
+                        JAXBContext.newInstance(CfgConsumerGraphic.class);
+                Unmarshaller jaxbUnmarshaller = context.createUnmarshaller();
+                        cfgGraphic = (CfgProduceGraphic) jaxbUnmarshaller.unmarshal(new
+                                File("src/main/resources/" + agentLocalName.split("Agent")[1] + "Graphic.xml"));
+
+            } catch (JAXBException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return cfgGraphic;
     }
 }
+

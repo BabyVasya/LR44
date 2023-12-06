@@ -10,7 +10,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "graphic")
-public class CfgGraphic {
+public class CfgConsumerGraphic {
     @Getter
     private List<Double> time;
     @Getter
