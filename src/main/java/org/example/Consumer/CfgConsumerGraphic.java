@@ -15,4 +15,6 @@ public class CfgConsumerGraphic {
     private List<Double> time;
     @Getter
     private List<Double> power;
+    @Getter
+    private Double pricePerUnit;
 }

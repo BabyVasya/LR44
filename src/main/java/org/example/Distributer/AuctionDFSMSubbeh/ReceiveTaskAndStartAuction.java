@@ -34,7 +34,6 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
         ACLMessage taskFromConsumer = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
         if (taskFromConsumer !=null) {
             SendTaskDto msg = receiveTask(taskFromConsumer);
-            log.info(""+msg.getMyMaxPrice()+ " " + msg.getRequiredPowerPerHour());
             startAuction(msg);
         }else {
             block();
@@ -44,7 +43,7 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
 
     @Override
     public boolean done() {
-        return false;
+        return end;
     }
 
     private SendTaskDto receiveTask(ACLMessage taskFromConsumer) {
@@ -54,14 +53,15 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
         ACLMessage initiateAuctionMsg = new ACLMessage(ACLMessage.PROPOSE);
         topic = TopicHelper.register(myAgent, topicName);
         List<AID> producers = DfHelper.search(myAgent, "Producer");
-        initiateAuctionMsg.setContent(gson.toJson(task) + topic);
+        initiateAuctionMsg.setContent(gson.toJson(task));
         if (!producers.isEmpty()) {
-            for (AID producer : producers) {
-                initiateAuctionMsg.addReceiver(new AID(producer.getLocalName(), false));
-            }
-            log.info(initiateAuctionMsg +"" );
+            producers.forEach(initiateAuctionMsg::addReceiver);
+//            initiateAuctionMsg.addReceiver(topic);
+            log.info("receive " + initiateAuctionMsg);
             getAgent().send(initiateAuctionMsg);
-            myAgent.addBehaviour(new MakingDesicion("Auction"));
+
+            end =true;
+//            myAgent.addBehaviour(new MakingDesicion("Auction"));
         } else {
             log.info("There are no producers " + producers);
         }

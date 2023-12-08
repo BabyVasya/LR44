@@ -4,17 +4,15 @@ import jade.core.behaviours.FSMBehaviour;
 import lombok.extern.slf4j.Slf4j;
 import org.example.Distributer.AuctionDFSMSubbeh.MakingDesicion;
 import org.example.Distributer.AuctionDFSMSubbeh.ReceiveTaskAndStartAuction;
-import org.example.Distributer.AuctionDFSMSubbeh.WakerBeh;
 
 @Slf4j
 public class AuctionDistributerFSM extends FSMBehaviour {
-//    private String topicName;
-//    public AuctionDistributerFSM(String topicName) {
-//        this.topicName = topicName;
-//    }
-//    @Override
-//    public void onStart() {
-//        this.registerFirstState(new );
-//
-//    }
+    @Override
+    public void onStart() {
+        this.registerFirstState(new ReceiveTaskAndStartAuction("Auction"), "GET1");
+        this.registerLastState(new MakingDesicion(), "GET2");
+
+        this.registerDefaultTransition("GET1", "GET2");
+    }
+
 }

@@ -27,9 +27,9 @@ public class SendTaskToDistributerBehaviour extends Behaviour {
     private void sendToDistributer() {
         ACLMessage taskMsg = new ACLMessage(ACLMessage.REQUEST);
         taskMsg.addReceiver(new AID("AgentDistributer1", false));
-        SendTaskDto sendTaskDto = new SendTaskDto(requiredPower(), 1000);
+        SendTaskDto sendTaskDto = new SendTaskDto(requiredPower(), 1500);
         taskMsg.setContent(gson.toJson(sendTaskDto));
-        log.info(taskMsg.getContent());
+        log.info("Task " + taskMsg);
         getAgent().send(taskMsg);
     }
 

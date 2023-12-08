@@ -16,6 +16,7 @@ public class AgentConsumer extends Agent implements ReadConsumerConfigInterface 
     @Override
     protected void setup() {
         addBehaviour(new SendTaskToDistributerBehaviour(readConfigConsumer(getLocalName())));
+        addBehaviour(new ReceiveAnswerFromDistributerBehaviour());
     }
 
     @Override
