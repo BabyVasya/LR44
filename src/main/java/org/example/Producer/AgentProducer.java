@@ -4,6 +4,7 @@ import jade.core.Agent;
 import lombok.extern.slf4j.Slf4j;
 import org.example.Consumer.CfgConsumerGraphic;
 import org.example.DfHelper;
+import org.example.Producer.AuctionPFSMSubbeh.DebateTimeout;
 import org.example.ReadProducerConfigInterface;
 
 import javax.xml.bind.JAXBContext;
@@ -16,7 +17,12 @@ public class AgentProducer extends Agent implements ReadProducerConfigInterface 
     @Override
     protected void setup() {
         DfHelper.register(this, "Producer");
-        addBehaviour(new CommonBeh());
+        if(!DebateTimeout.ending) {
+            addBehaviour(new CommonBeh());
+        }
+        if (DebateTimeout.ending) {
+            removeBehaviour(new CommonBeh());
+        }
     }
 
     @Override

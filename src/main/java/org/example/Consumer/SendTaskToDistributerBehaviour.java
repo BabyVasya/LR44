@@ -36,13 +36,10 @@ public class SendTaskToDistributerBehaviour extends TickerBehaviour {
     private void sendToDistributer() {
         ACLMessage taskMsg = new ACLMessage(ACLMessage.PROXY);
         taskMsg.addReceiver(new AID("AgentDistributer1", false));
-        SendTaskDto sendTaskDto = new SendTaskDto(requiredPower(), 1400);
+        SendTaskDto sendTaskDto = new SendTaskDto(cfgGraphic.getPower().get(cfgGraphic.getTime().indexOf(VirtualTime.currentHour)), 1400);
         taskMsg.setContent(gson.toJson(sendTaskDto));
         log.info("Task " + taskMsg);
         getAgent().send(taskMsg);
     }
 
-    private double requiredPower() {
-        return cfgGraphic.getPower().get(cfgGraphic.getTime().get(cfgGraphic.getTime().indexOf(VirtualTime.currentHour)));
-    }
 }

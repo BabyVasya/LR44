@@ -79,24 +79,35 @@ public class WaitForProposeBeh extends Behaviour implements ReadProducerConfigIn
             if(cfgProduceGraphicSEC !=null && cfgProduceGraphicVES !=null  && cfgProduceGraphicTEC !=null  ) {
                 isDebatePosibleForProduser(fromDistributer);
             }
+            AuctionDebate.agentsPaticipant = null;
+            AuctionDebate.vesPrice = 0;
+            AuctionDebate.tecPrice = 0;
+            AuctionDebate.secPrice = 0;
             if(myAgent.getLocalName().equals("AgentTECProducer") && tecAgreeWithtask) {
                 myStartInAuction.addReceiver(topic);
-                myStartInAuction.setContent(proposeMsg.getContent() + " " +cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour)) + " " + cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour))*2);
+                myStartInAuction.setContent(proposeMsg.getContent() + " " +cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour)) + " " + cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour))*2 + " " + getBehaviourName());
+                log.info("Выход на торги " + myStartInAuction);
+                DebateTimeout.ending = false;
                 getAgent().send(myStartInAuction);
                 proposeMsg = null;
             }
             if(myAgent.getLocalName().equals("AgentSECProducer") && secAgreeWithtask) {
                 myStartInAuction.addReceiver(topic);
-                myStartInAuction.setContent(proposeMsg.getContent() + " " + cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour)) + " " +cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour))*2);
+                myStartInAuction.setContent(proposeMsg.getContent() + " " + cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour)) + " " +cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour))*2+ " " + getBehaviourName());
+                log.info("Выход на торги " + myStartInAuction);
+                DebateTimeout.ending = false;
                 getAgent().send(myStartInAuction);
                 proposeMsg = null;
             }
             if(myAgent.getLocalName().equals("AgentVESProducer") && vesAgreeWithtask) {
                 myStartInAuction.addReceiver(topic);
-                myStartInAuction.setContent(proposeMsg.getContent() + " " + cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour)) + " " +cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour))*2);
+                myStartInAuction.setContent(proposeMsg.getContent() + " " + cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour)) + " " +cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour))*2 + " " + getBehaviourName());
+                log.info("Выход на торги " + myStartInAuction);
+                DebateTimeout.ending = false;
                 getAgent().send(myStartInAuction);
                 proposeMsg = null;
             }
+//            log.info("Цены tec " + AuctionDebate.tecPrice + " ves " + AuctionDebate.vesPrice + " sec " + AuctionDebate.secPrice);
 
         } else {
             block();

@@ -11,7 +11,6 @@ public class CommonBehDis extends Behaviour {
         ACLMessage taskFromConsumer = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.PROXY));
         if (taskFromConsumer!=null) {
             myAgent.addBehaviour(new AuctionDistributerFSM(taskFromConsumer));
-            log.info("here");
         }
 
     }

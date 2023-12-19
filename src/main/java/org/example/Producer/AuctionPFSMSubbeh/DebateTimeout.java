@@ -24,6 +24,7 @@ public class DebateTimeout extends WakerBehaviour {
     @Override
     protected void onWake() {
         ending = true;
-        log.info("debate timeout");
+        AuctionDebate.flagOfFirstIter = false;
+        log.info("Timeout");
     }
 }

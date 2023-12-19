@@ -39,10 +39,7 @@ public class MakingDesicionParall extends ParallelBehaviour {
         getAgent().send(backtoConsumer);
         ACLMessage sendContract = new ACLMessage(ACLMessage.AGREE);
         sendContract.addReceiver(new AID(backtoConsumer.getContent().split("=")[0], false));
-        sendContract.setContent("Winner");
         getAgent().send(sendContract);
-        log.info(String.valueOf(backtoConsumer));
-        log.info(String.valueOf(sendContract));
      return 1;
     }
 }

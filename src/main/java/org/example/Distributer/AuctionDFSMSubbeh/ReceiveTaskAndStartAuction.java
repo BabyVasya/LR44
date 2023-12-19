@@ -57,12 +57,8 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
         initiateAuctionMsg.setContent(gson.toJson(task));
         if (!producers.isEmpty()) {
             producers.forEach(initiateAuctionMsg::addReceiver);
-//            initiateAuctionMsg.addReceiver(topic);
-            log.info("receive " + initiateAuctionMsg);
             getAgent().send(initiateAuctionMsg);
-
             end =true;
-//            myAgent.addBehaviour(new MakingDesicion("Auction"));
         } else {
             log.info("There are no producers " + producers);
         }

@@ -31,9 +31,7 @@ public class MakingDesicion extends Behaviour {
     public void action() {
         ACLMessage fromProducersMsg = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.AGREE));
         if (fromProducersMsg!=null && !fromProducersMsg.getSender().getLocalName().equals("AgentDistributer1")){
-            log.info("we get it " + fromProducersMsg +" ");
             proposesList.put(fromProducersMsg.getSender().getLocalName() , Double.valueOf(fromProducersMsg.getContent().split(" ")[0]));
-            log.info(proposesList.toString());
         }else {
             block();
         }

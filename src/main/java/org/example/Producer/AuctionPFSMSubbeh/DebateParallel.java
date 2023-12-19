@@ -21,7 +21,7 @@ public class DebateParallel extends ParallelBehaviour {
     public void onStart() {
         AuctionDebate auctionDebate = new AuctionDebate(topicName);
         this.addSubBehaviour(auctionDebate);
-        DebateTimeout debateTimeout = new DebateTimeout(myAgent, 200);
+        DebateTimeout debateTimeout = new DebateTimeout(myAgent, 100);
         this.addSubBehaviour(debateTimeout);
     }
 
@@ -33,8 +33,8 @@ public class DebateParallel extends ParallelBehaviour {
             Gson gson = new Gson();
             SendTaskDto sendTaskDto = gson.fromJson(AuctionDebate.currentMsgVes.getContent().split(" ")[0], SendTaskDto.class);
             end.setContent(AuctionDebate.currentMsgVes.getContent().split(" ")[2] + " " + sendTaskDto);
+            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgVes.getContent());
             AuctionDebate.currentMsgVes = null;
-            AuctionDebate.vesPrice = 0;
             getAgent().send(end);
         }
         if (AuctionDebate.currentMsgTec != null && myAgent.getLocalName().equals("AgentTECProducer")) {
@@ -43,8 +43,8 @@ public class DebateParallel extends ParallelBehaviour {
             Gson gson = new Gson();
             SendTaskDto sendTaskDto = gson.fromJson(AuctionDebate.currentMsgTec.getContent().split(" ")[0], SendTaskDto.class);
             end.setContent(AuctionDebate.currentMsgTec.getContent().split(" ")[2] + " " + sendTaskDto);
+            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgTec.getContent());
             AuctionDebate.currentMsgTec = null;
-            AuctionDebate.tecPrice = 0;
             getAgent().send(end);
         }
         if (AuctionDebate.currentMsgSec != null && myAgent.getLocalName().equals("AgentSECProducer")) {
@@ -53,12 +53,13 @@ public class DebateParallel extends ParallelBehaviour {
             Gson gson = new Gson();
             SendTaskDto sendTaskDto = gson.fromJson(AuctionDebate.currentMsgSec.getContent().split(" ")[0], SendTaskDto.class);
             end.setContent(AuctionDebate.currentMsgSec.getContent().split(" ")[2] + " " + sendTaskDto);
+            log.info("Sending my price " + end.getContent() + " last msg " + AuctionDebate.currentMsgSec.getContent());
             AuctionDebate.currentMsgSec = null;
-            AuctionDebate.secPrice = 0;
             getAgent().send(end);
         }
-        AuctionDebate.flagOfFirstIter = false;
-        DebateTimeout.ending = false;
+        AuctionDebate.vesPrice = 0;
+        AuctionDebate.tecPrice = 0;
+        AuctionDebate.secPrice = 0;
 
         return 0;
     }
