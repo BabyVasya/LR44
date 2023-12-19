@@ -12,7 +12,7 @@ import java.util.List;
 @XmlRootElement(name = "graphic")
 public class CfgConsumerGraphic {
     @Getter
-    private List<Double> time;
+    private List<Integer> time;
     @Getter
     private List<Double> power;
     @Getter

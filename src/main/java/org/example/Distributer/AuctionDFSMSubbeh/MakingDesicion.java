@@ -10,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.Producer.ProducerAnswerDto;
 import org.example.TopicHelper;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 public class MakingDesicion extends Behaviour {
@@ -20,7 +18,7 @@ public class MakingDesicion extends Behaviour {
     private AID topic;
     private boolean end;
     private double minPrice;
-    private List<Double> proposesList = new ArrayList<>();
+    public static Map<String, Double> proposesList = new HashMap<>();
     private final Gson gson = new Gson();
 
 
@@ -31,22 +29,11 @@ public class MakingDesicion extends Behaviour {
     }
     @Override
     public void action() {
-        ACLMessage fromProducersMsg = getAgent().receive(MessageTemplate.and(MessageTemplate.MatchTopic(topic), MessageTemplate.MatchPerformative(ACLMessage.CONFIRM)));
+        ACLMessage fromProducersMsg = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.AGREE));
         if (fromProducersMsg!=null && !fromProducersMsg.getSender().getLocalName().equals("AgentDistributer1")){
-            log.info("we get it " + fromProducersMsg +"");
-//            ProducerAnswerDto producerAnswerDto = gson.fromJson(fromProducersMsg.getContent(), ProducerAnswerDto.class);
-//            proposesList.add(producerAnswerDto.getMyPrice());
-//            if(proposesList.size() ==3 ) {
-//                minPrice = Collections.min(proposesList);
-//                proposesList.clear();
-//                log.info("Minimal price " + minPrice);
-//                if(minPrice <= producerAnswerDto.getTaskPrice()){
-//                    ACLMessage toConsomerMsg = new ACLMessage(ACLMessage.CONFIRM);
-//                    toConsomerMsg.setContent(gson.toJson(producerAnswerDto));
-//                    toConsomerMsg.addReceiver(new AID("AgentTransportConsumer", false));
-//                    getAgent().send(toConsomerMsg);
-//                }
-//            }
+            log.info("we get it " + fromProducersMsg +" ");
+            proposesList.put(fromProducersMsg.getSender().getLocalName() , Double.valueOf(fromProducersMsg.getContent().split(" ")[0]));
+            log.info(proposesList.toString());
         }else {
             block();
         }

@@ -16,7 +16,7 @@ public class AgentProducer extends Agent implements ReadProducerConfigInterface 
     @Override
     protected void setup() {
         DfHelper.register(this, "Producer");
-        addBehaviour(new AuctionProducerFSM("Auction"));
+        addBehaviour(new CommonBeh());
     }
 
     @Override

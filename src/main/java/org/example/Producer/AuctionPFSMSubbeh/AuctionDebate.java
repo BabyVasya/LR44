@@ -6,36 +6,38 @@ import jade.core.behaviours.Behaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import lombok.extern.slf4j.Slf4j;
-import org.example.Consumer.CfgConsumerGraphic;
 import org.example.Consumer.SendTaskDto;
-import org.example.Producer.CfgProduceGraphic;
-import org.example.ReadProducerConfigInterface;
 import org.example.TopicHelper;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class AuctionDebate extends Behaviour  {
+public class AuctionDebate extends Behaviour {
     private String topicName;
     private AID topic;
     private boolean end;
-    private boolean flagOfFirstIter;
+    public static boolean flagOfFirstIter;
 
-    private double tecPrice;
-    private double vesPrice;
+    public static double tecPrice;
+    public static double vesPrice;
+    public static double secPrice;
+
+    private int tryCounterTec;
+    private int tryCounterVes;
 
     private double tecMinPrice;
     private double vesMinPrice;
+    private boolean vesOtkat;
+    private boolean tecOtkat;
+    public static ACLMessage currentMsgTec;
+    public static ACLMessage currentMsgVes;
+    public static ACLMessage currentMsgSec;
+    private ACLMessage myPropose;
 
-    private Map<AID , Double> agentsPaticipant = new HashMap<>();
+    public static Map<AID, Double> agentsPaticipant = Collections.synchronizedMap(new HashMap<>());
 
     public AuctionDebate(String topicName) {
         this.topicName = topicName;
@@ -44,6 +46,7 @@ public class AuctionDebate extends Behaviour  {
     @Override
     public void onStart() {
         topic = TopicHelper.register(myAgent, this.topicName);
+        done();
     }
 
     @Override
@@ -55,38 +58,37 @@ public class AuctionDebate extends Behaviour  {
 
             if (!agentsPaticipant.containsKey(proposesToTopic.getSender())) {
                 agentsPaticipant.put(proposesToTopic.getSender(), Double.valueOf(proposesToTopic.getContent().split(" ")[1]));
-                log.info(String.valueOf(agentsPaticipant));
             }
             if (agentsPaticipant.containsKey(myAgent.getAID())) {
 
-//                oneParticipantCase(proposesToTopic, sendTaskDto);
-                ACLMessage myPropose = new ACLMessage(ACLMessage.REQUEST);
+                myPropose = new ACLMessage(ACLMessage.REQUEST);
                 myPropose.addReceiver(topic);
                 if(!flagOfFirstIter) {
                     if(myAgent.getLocalName().equals("AgentTECProducer")) {
                         myPropose.setContent(proposesToTopic.getContent());
                         getAgent().send(myPropose);
-                        log.info("First iterate" + myPropose);
                         flagOfFirstIter = true;
                     }
                     if(myAgent.getLocalName().equals("AgentSECProducer")) {
                         myPropose.setContent(proposesToTopic.getContent());
                         getAgent().send(myPropose);
-                        log.info("First iterate" + myPropose);
                         flagOfFirstIter = true;
                     }
                     if(myAgent.getLocalName().equals("AgentVESProducer")) {
                         myPropose.setContent(proposesToTopic.getContent());
                         getAgent().send(myPropose);
-                        log.info("First iterate" + myPropose);
-                        log.info("First iterate" + myPropose);
                         flagOfFirstIter = true;
                     }
                 }
 
                 if(!myAgent.getLocalName().equals(proposesToTopic.getSender().getLocalName()) && flagOfFirstIter) {
                     if(myAgent.getLocalName().equals("AgentTECProducer")) {
-                        vesPrice = Double.valueOf(proposesToTopic.getContent().split(" ")[2]);
+                        if(proposesToTopic.getSender().equals("AgentVESProducer")) {
+                            vesPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
+                        }
+                        if(proposesToTopic.getSender().equals("AgentSECProducer")) {
+                            secPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
+                        }
                         if(sendTaskDto.getMyMaxPrice() < Double.valueOf(proposesToTopic.getContent().split(" ")[2])) {
                             if(sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
                                 tecPrice = sendTaskDto.getMyMaxPrice();
@@ -107,7 +109,21 @@ public class AuctionDebate extends Behaviour  {
                             }
 
                         }
-                        if(vesPrice > tecPrice) {
+                        if(secPrice <= tecPrice) {
+                            if (sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
+                                double tmp = tecPrice;
+                                tecPrice = 0.95*secPrice;
+                                log.info("ТЭЦ Конкурирую с СЭС " + tecPrice );
+                                if (tecPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                    tecPrice = tmp;
+                                    log.info("ТЭЦ Откат конкуренции " + tecPrice + "Моя минимальная цена " + agentsPaticipant.get(myAgent.getAID()));
+                                }
+                            } else {
+                                log.info("ТЭЦ выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + tecPrice);
+                            }
+
+                        }
+                        if(vesPrice > tecPrice || secPrice > tecPrice) {
                             log.info("ТЭЦ Продолжаю торг со своей ценой " + tecPrice);
                         }
                         List<String> priceListTEC = new ArrayList<>(List.of(proposesToTopic.getContent().split(" ")));
@@ -116,14 +132,73 @@ public class AuctionDebate extends Behaviour  {
                         priceListTEC.add(String.valueOf(agentsPaticipant.get(myAgent.getAID())));
                         priceListTEC.add(String.valueOf(tecPrice));
                         myPropose.setContent(priceListTEC.stream().collect(Collectors.joining(" ")));
-                        log.info("ТЭЦ отсылаю свою цену " + myPropose);
+                        log.info("ТЭЦ отсылаю свою цену " + myPropose + myPropose.getSender());
+                        currentMsgTec = myPropose;
                         getAgent().send(myPropose);
                     }
-                    if(myAgent.getLocalName().equals("AgentSECProducer")) {
 
+                    if(myAgent.getLocalName().equals("AgentSECProducer")) {
+                        if(proposesToTopic.getSender().equals("AgentTECProducer")) {
+                            tecPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
+                        }
+                        if(proposesToTopic.getSender().equals("AgentVESProducer")) {
+                            vesPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
+                        }
+                        if(sendTaskDto.getMyMaxPrice() < Double.valueOf(proposesToTopic.getContent().split(" ")[2])) {
+                            if(sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
+                                secPrice = sendTaskDto.getMyMaxPrice();
+                                log.info("СЭС уравнял цену с клиентом" + secPrice);
+                            }
+                        }
+                        if(tecPrice <= secPrice) {
+                            if (sendTaskDto.getMyMaxPrice() >= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
+                                double tmp = secPrice;
+                                secPrice = 0.95*tecPrice;
+                                log.info("СЭС Конкурирую с ТЭЦ " + secPrice);
+                                if (secPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                    secPrice = tmp;
+                                    log.info("СЭС Откат конкуренции " + secPrice + " моя минимальная цена " + agentsPaticipant.get(myAgent.getAID()));
+                                }
+                            } else {
+                                log.info("СЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + secPrice);
+                            }
+
+                        }
+                        if(vesPrice <= secPrice) {
+                            if (sendTaskDto.getMyMaxPrice() >= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
+                                double tmp = secPrice;
+                                secPrice = 0.95*vesPrice;
+                                log.info("СЭС Конкурирую с ВЭС " + secPrice);
+                                if (secPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                    secPrice = tmp;
+                                    log.info("СЭС Откат конкуренции " + secPrice + " моя минимальная цена " + agentsPaticipant.get(myAgent.getAID()));
+                                }
+                            } else {
+                                log.info("ВЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + secPrice);
+                            }
+
+                        }
+                        if(tecPrice > secPrice || vesPrice > secPrice) {
+                            log.info("СЭС Продолжаю торг со своей ценой " + secPrice);
+                        }
+                        List<String> priceListSEC = new ArrayList<>(List.of(proposesToTopic.getContent().split(" ")));
+                        priceListSEC.remove(2);
+                        priceListSEC.remove(1);
+                        priceListSEC.add(String.valueOf(agentsPaticipant.get(myAgent.getAID())));
+                        priceListSEC.add(String.valueOf(secPrice));
+                        myPropose.setContent(priceListSEC.stream().collect(Collectors.joining(" ")));
+                        log.info("СЭС отсылаю свою цену " +myPropose + myPropose.getSender());
+                        currentMsgSec = myPropose;
+                        getAgent().send(myPropose);
                     }
+
                     if(myAgent.getLocalName().equals("AgentVESProducer")) {
-                        tecPrice = Double.valueOf(proposesToTopic.getContent().split(" ")[2]);
+                        if(proposesToTopic.getSender().equals("AgentTECProducer")) {
+                            tecPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
+                        }
+                        if(proposesToTopic.getSender().equals("AgentSECProducer")) {
+                            secPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
+                        }
                         if(sendTaskDto.getMyMaxPrice() < Double.valueOf(proposesToTopic.getContent().split(" ")[2])) {
                             if(sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
                                 vesPrice = sendTaskDto.getMyMaxPrice();
@@ -131,7 +206,7 @@ public class AuctionDebate extends Behaviour  {
                             }
                         }
                         if(tecPrice <= vesPrice) {
-                            if (sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
+                            if (sendTaskDto.getMyMaxPrice() >= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
                                 double tmp = vesPrice;
                                 vesPrice = 0.95*tecPrice;
                                 log.info("ВЭС Конкурирую с ТЭЦ " + vesPrice);
@@ -144,7 +219,21 @@ public class AuctionDebate extends Behaviour  {
                             }
 
                         }
-                        if(tecPrice > vesPrice) {
+                        if(secPrice <= vesPrice) {
+                            if (sendTaskDto.getMyMaxPrice() >= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
+                                double tmp = vesPrice;
+                                vesPrice = 0.95*secPrice;
+                                log.info("ВЭС Конкурирую с СЭС " + vesPrice);
+                                if (vesPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                    vesPrice = tmp;
+                                    log.info("ВЭС Откат конкуренции " + vesPrice + " моя минимальная цена " + agentsPaticipant.get(myAgent.getAID()));
+                                }
+                            } else {
+                                log.info("ВЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + vesPrice);
+                            }
+
+                        }
+                        if(tecPrice > vesPrice || secPrice > vesPrice) {
                             log.info("ВЭС Продолжаю торг со своей ценой " + vesPrice);
                         }
                         List<String> priceListVES = new ArrayList<>(List.of(proposesToTopic.getContent().split(" ")));
@@ -153,11 +242,11 @@ public class AuctionDebate extends Behaviour  {
                         priceListVES.add(String.valueOf(agentsPaticipant.get(myAgent.getAID())));
                         priceListVES.add(String.valueOf(vesPrice));
                         myPropose.setContent(priceListVES.stream().collect(Collectors.joining(" ")));
-                        log.info("ВЭС отсылаю свою цену " +myPropose);
+                        log.info("ВЭС отсылаю свою цену " +myPropose + myPropose.getSender());
+                        currentMsgVes = myPropose;
                         getAgent().send(myPropose);
                     }
                 }
-
             }
         } else {
             block();
@@ -166,17 +255,22 @@ public class AuctionDebate extends Behaviour  {
 
     @Override
     public boolean done() {
-        return end;
+        return DebateTimeout.ending;
+    }
+
+    @Override
+    public int onEnd() {
+        return 0;
     }
 
     private void oneParticipantCase(ACLMessage proposesToTopic, SendTaskDto sendTaskDto) {
-        if (agentsPaticipant.size() ==1 ) {
+        if (agentsPaticipant.size() == 1) {
             ACLMessage toDistributer = new ACLMessage(ACLMessage.CONFIRM);
-            if(sendTaskDto.getMyMaxPrice() <= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
+            if (sendTaskDto.getMyMaxPrice() <= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
                 agentsPaticipant.put(myAgent.getAID(), sendTaskDto.getMyMaxPrice());
                 toDistributer.setContent(String.valueOf(new ArrayList<>(agentsPaticipant.values()).get(0)));
                 toDistributer.addReceiver(topic);
-                log.info("No more concurents, i am sending propose " + toDistributer );
+                log.info("No more concurents, i am sending propose " + toDistributer);
                 getAgent().send(toDistributer);
             } else {
                 log.info("the price is too low for me");
@@ -185,8 +279,9 @@ public class AuctionDebate extends Behaviour  {
         }
     }
 
-    private void moreThenOneParticipant() {
+    private void moreThenOneParticipant(ACLMessage proposesToTopic, SendTaskDto sendTaskDto, ACLMessage myPropose) {
 
     }
-
 }
+
+

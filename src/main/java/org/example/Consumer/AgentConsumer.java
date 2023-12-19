@@ -4,6 +4,7 @@ import jade.core.Agent;
 import lombok.extern.slf4j.Slf4j;
 import org.example.Producer.CfgProduceGraphic;
 import org.example.ReadConsumerConfigInterface;
+import org.example.VirtualTime;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -15,7 +16,7 @@ import java.io.File;
 public class AgentConsumer extends Agent implements ReadConsumerConfigInterface {
     @Override
     protected void setup() {
-        addBehaviour(new SendTaskToDistributerBehaviour(readConfigConsumer(getLocalName())));
+        addBehaviour(new SendTaskToDistributerBehaviour(readConfigConsumer(getLocalName()),this));
         addBehaviour(new ReceiveAnswerFromDistributerBehaviour());
     }
 

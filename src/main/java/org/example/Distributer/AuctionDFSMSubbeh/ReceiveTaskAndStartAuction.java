@@ -20,9 +20,11 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
     private String topicName;
     private AID topic;
     private boolean end;
+    private ACLMessage taskFromConsumer;
 
-    public ReceiveTaskAndStartAuction(String topicName) {
+    public ReceiveTaskAndStartAuction(String topicName, ACLMessage task) {
         this.topicName = topicName;
+        this.taskFromConsumer = task;
     }
 
     @Override
@@ -31,7 +33,6 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
     }
     @Override
     public void action() {
-        ACLMessage taskFromConsumer = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
         if (taskFromConsumer !=null) {
             SendTaskDto msg = receiveTask(taskFromConsumer);
             startAuction(msg);

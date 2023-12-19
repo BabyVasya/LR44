@@ -14,6 +14,7 @@ import org.example.Producer.CfgProduceGraphic;
 import org.example.Producer.ProducerAnswerDto;
 import org.example.ReadProducerConfigInterface;
 import org.example.TopicHelper;
+import org.example.VirtualTime;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -40,11 +41,12 @@ public class WaitForProposeBeh extends Behaviour implements ReadProducerConfigIn
 
     private boolean secAgreeWithtask;
     private boolean vesAgreeWithtask;
+    private ACLMessage proposeMsg;
 
 
-    public WaitForProposeBeh(String topicName){
+    public WaitForProposeBeh(String topicName, ACLMessage msg){
         this.topicName = topicName;
-
+        this.proposeMsg = msg;
     }
 
     @Override
@@ -55,23 +57,23 @@ public class WaitForProposeBeh extends Behaviour implements ReadProducerConfigIn
 
     @Override
     public void action() {
-        ACLMessage proposeMsg = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE));
+//        ACLMessage proposeMsg = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE));
         if(proposeMsg!=null) {
             SendTaskDto fromDistributer = gson.fromJson(proposeMsg.getContent(), SendTaskDto.class);
             ACLMessage myStartInAuction = new ACLMessage(ACLMessage.INFORM);
             cfgProduceGraphicTEC = readConfigProducer("AgentTECProducer");
             if (cfgProduceGraphicTEC!=null) {
-                    tecStartPrice = cfgProduceGraphicTEC.getPrice().get(0);
+                    tecStartPrice = cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour));
             }
 
             cfgProduceGraphicSEC = readConfigProducer("AgentSECProducer");
             if (cfgProduceGraphicSEC!=null) {
-                    secStartPrice = cfgProduceGraphicSEC.getPrice().get(0);
+                    secStartPrice = cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour));
             }
 
             cfgProduceGraphicVES = readConfigProducer("AgentVESProducer");
             if (cfgProduceGraphicVES!=null) {
-                    vesStartPrice = cfgProduceGraphicVES.getPrice().get(0);
+                    vesStartPrice = cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour));
             }
 
             if(cfgProduceGraphicSEC !=null && cfgProduceGraphicVES !=null  && cfgProduceGraphicTEC !=null  ) {
@@ -79,18 +81,21 @@ public class WaitForProposeBeh extends Behaviour implements ReadProducerConfigIn
             }
             if(myAgent.getLocalName().equals("AgentTECProducer") && tecAgreeWithtask) {
                 myStartInAuction.addReceiver(topic);
-                myStartInAuction.setContent(proposeMsg.getContent() + " " +cfgProduceGraphicTEC.getPrice().get(0) + " " + cfgProduceGraphicTEC.getPrice().get(0)*2);
+                myStartInAuction.setContent(proposeMsg.getContent() + " " +cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour)) + " " + cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour))*2);
                 getAgent().send(myStartInAuction);
+                proposeMsg = null;
             }
             if(myAgent.getLocalName().equals("AgentSECProducer") && secAgreeWithtask) {
                 myStartInAuction.addReceiver(topic);
-                myStartInAuction.setContent(proposeMsg.getContent() + " " + cfgProduceGraphicSEC.getPrice().get(0) + " " +cfgProduceGraphicSEC.getPrice().get(0)*2);
+                myStartInAuction.setContent(proposeMsg.getContent() + " " + cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour)) + " " +cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour))*2);
                 getAgent().send(myStartInAuction);
+                proposeMsg = null;
             }
             if(myAgent.getLocalName().equals("AgentVESProducer") && vesAgreeWithtask) {
                 myStartInAuction.addReceiver(topic);
-                myStartInAuction.setContent(proposeMsg.getContent() + " " + cfgProduceGraphicVES.getPrice().get(0) + " " +cfgProduceGraphicVES.getPrice().get(0)*2);
+                myStartInAuction.setContent(proposeMsg.getContent() + " " + cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour)) + " " +cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour))*2);
                 getAgent().send(myStartInAuction);
+                proposeMsg = null;
             }
 
         } else {
@@ -122,23 +127,23 @@ public class WaitForProposeBeh extends Behaviour implements ReadProducerConfigIn
 
 
     private void isDebatePosibleForProduser(SendTaskDto fromDistributer) {
-        if( (cfgProduceGraphicSEC.getPower().get(0) >= fromDistributer.getRequiredPowerPerHour()) && (cfgProduceGraphicSEC.getPrice().get(0) <= fromDistributer.getMyMaxPrice()) ) {
+        if( (cfgProduceGraphicSEC.getPower().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour)) >= fromDistributer.getRequiredPowerPerHour()) && (cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour)) <= fromDistributer.getMyMaxPrice()) ) {
             secAgreeWithtask = true;
-            secStartPrice = cfgProduceGraphicSEC.getPrice().get(0)*2;
+            secStartPrice = cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour))*2;
         } else {
             secAgreeWithtask = false;
             secStartPrice = 0;
         }
-        if( (cfgProduceGraphicTEC.getPower().get(0) >= fromDistributer.getRequiredPowerPerHour()) && (cfgProduceGraphicTEC.getPrice().get(0) <= fromDistributer.getMyMaxPrice()) ) {
+        if( (cfgProduceGraphicTEC.getPower().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour)) >= fromDistributer.getRequiredPowerPerHour()) && (cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour)) <= fromDistributer.getMyMaxPrice()) ) {
             tecAgreeWithtask = true;
-            tecStartPrice = cfgProduceGraphicTEC.getPrice().get(0)*2;
+            tecStartPrice = cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour))*2;
         } else {
             tecAgreeWithtask = false;
             tecStartPrice = 0;
         }
-        if( (cfgProduceGraphicVES.getPower().get(0) >= fromDistributer.getRequiredPowerPerHour()) && (cfgProduceGraphicVES.getPrice().get(0) <= fromDistributer.getMyMaxPrice()) ) {
+        if( (cfgProduceGraphicVES.getPower().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour)) >= fromDistributer.getRequiredPowerPerHour()) && (cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour)) <= fromDistributer.getMyMaxPrice()) ) {
             vesAgreeWithtask = true;
-            vesStartPrice = cfgProduceGraphicVES.getPrice().get(0)*2;
+            vesStartPrice = cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour))*2;
         }
         else {
             vesAgreeWithtask = false;
@@ -152,33 +157,6 @@ public class WaitForProposeBeh extends Behaviour implements ReadProducerConfigIn
         log.info(String.valueOf("sec"+ secStartPrice));
         log.info(String.valueOf("ves"+vesStartPrice));
     }
-
-//    if( (tecStartPrice < secStartPrice) && tecAgreeWithtask && secAgreeWithtask) {
-//        tecStartPrice = secStartPrice*0.9;
-//    }
-//
-//        if((secStartPrice < tecStartPrice) && tecAgreeWithtask && secAgreeWithtask) {
-//        secStartPrice = tecStartPrice*0.9;
-//    }
-//        if((secStartPrice < vesStartPrice)  && vesAgreeWithtask && secAgreeWithtask) {
-//        secStartPrice = vesStartPrice*0.9;
-//    }
-//        if((vesStartPrice < secStartPrice) && vesAgreeWithtask && secAgreeWithtask) {
-//        vesStartPrice = secStartPrice*0.9;
-//    }
-//        if((tecStartPrice < secStartPrice) && tecAgreeWithtask && secAgreeWithtask) {
-//        tecStartPrice = secStartPrice*0.9;
-//    }
-//
-//        if((vesStartPrice < tecStartPrice) && tecAgreeWithtask && vesAgreeWithtask) {
-//        vesStartPrice = tecStartPrice*0.9;
-//    }
-//        if((tecStartPrice < vesStartPrice) && tecAgreeWithtask && vesAgreeWithtask) {
-//        tecStartPrice = vesStartPrice*0.9;
-//    }
-
-
-
 
 
 }

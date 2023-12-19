@@ -1,9 +1,9 @@
 <graphic>
-    <power>0</power>
-    <power>0</power>
-    <power>0</power>
-    <power>0</power>
-    <power>0</power>
+    <power>18.556</power>
+    <power>18.556</power>
+    <power>18.556</power>
+    <power>18.556</power>
+    <power>18.556</power>
     <power>0.812</power>
     <power>7.735</power>
     <power>12.892</power>
@@ -46,12 +46,15 @@
     <time>19</time>
     <time>20</time>
     <time>21</time>
+    <time>22</time>
+    <time>23</time>
+    <time>24</time>
 
-    <price>0</price>
-    <price>0</price>
-    <price>0</price>
-    <price>0</price>
-    <price>0</price>
+    <price>1100</price>
+    <price>1100</price>
+    <price>1100</price>
+    <price>1100</price>
+    <price>1100</price>
     <price>100</price>
     <price>700</price>
     <price>1300</price>
