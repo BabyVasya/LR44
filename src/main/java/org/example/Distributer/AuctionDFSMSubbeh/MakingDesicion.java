@@ -14,24 +14,24 @@ import java.util.*;
 
 @Slf4j
 public class MakingDesicion extends Behaviour {
-    private String topicName;
     private AID topic;
-    private boolean end;
-    private double minPrice;
     public static Map<String, Double> proposesList = new HashMap<>();
-    private final Gson gson = new Gson();
+
 
 
 
     @Override
     public void onStart() {
         topic = TopicHelper.register(myAgent, "Auction");
+        proposesList.clear();
+//        log.info("proposes list cleared " + proposesList);
     }
     @Override
     public void action() {
-        ACLMessage fromProducersMsg = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.AGREE));
-        if (fromProducersMsg!=null && !fromProducersMsg.getSender().getLocalName().equals("AgentDistributer1")){
-            proposesList.put(fromProducersMsg.getSender().getLocalName() , Double.valueOf(fromProducersMsg.getContent().split(" ")[0]));
+        ACLMessage fromProducersMsg = getAgent().receive(MessageTemplate.and(MessageTemplate.MatchTopic(topic), MessageTemplate.MatchPerformative(ACLMessage.AGREE)));
+        if (fromProducersMsg!=null){
+            log.info(fromProducersMsg.getSender().getLocalName() + fromProducersMsg.getContent());
+            proposesList.put(fromProducersMsg.getSender().getLocalName() , Double.valueOf(fromProducersMsg.getContent()));
         }else {
             block();
         }

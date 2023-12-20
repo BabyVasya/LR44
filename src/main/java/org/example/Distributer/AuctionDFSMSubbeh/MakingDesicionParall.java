@@ -33,9 +33,11 @@ public class MakingDesicionParall extends ParallelBehaviour {
     public int onEnd() {
         ACLMessage backtoConsumer = new ACLMessage(ACLMessage.SUBSCRIBE);
         backtoConsumer.addReceiver(new AID("AgentTransportConsumer", false));
+        backtoConsumer.addReceiver(new AID("AgentPishPromConsumer", false));
         backtoConsumer.setContent(String.valueOf(MakingDesicion.proposesList.entrySet().stream()
                 .min(Map.Entry.comparingByValue())
                 .orElseThrow()));
+//        log.info(String.valueOf(backtoConsumer));
         getAgent().send(backtoConsumer);
         ACLMessage sendContract = new ACLMessage(ACLMessage.AGREE);
         sendContract.addReceiver(new AID(backtoConsumer.getContent().split("=")[0], false));

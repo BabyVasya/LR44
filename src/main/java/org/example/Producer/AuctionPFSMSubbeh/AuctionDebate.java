@@ -14,6 +14,8 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
+
+
 @Slf4j
 public class AuctionDebate extends Behaviour {
     private String topicName;
@@ -36,8 +38,9 @@ public class AuctionDebate extends Behaviour {
     public static ACLMessage currentMsgVes;
     public static ACLMessage currentMsgSec;
     private ACLMessage myPropose;
+    public static Map<AID, Double> agentsPaticipant = new HashMap<>();
 
-    public static Map<AID, Double> agentsPaticipant;
+
 //    private ACLMessage proposesToTopic;
 
     public AuctionDebate(String topicName) {
@@ -47,222 +50,215 @@ public class AuctionDebate extends Behaviour {
     @Override
     public void onStart() {
         topic = TopicHelper.register(myAgent, this.topicName);
-//        proposesToTopic = null;
+        ACLMessage priceBet = new ACLMessage(ACLMessage.INFORM);
+        priceBet.addReceiver(topic);
+        if (agentsPaticipant.containsKey(myAgent.getAID())) {
+            if (myAgent.getLocalName().equals("AgentTECProducer")) {
+                tecPrice = agentsPaticipant.get(myAgent.getAID()) * 2;
+                priceBet.setContent(String.valueOf(agentsPaticipant.get(myAgent.getAID()) * 2));
+                getAgent().send(priceBet);
+            }
+            if (myAgent.getLocalName().equals("AgentSECProducer")) {
+                secPrice = agentsPaticipant.get(myAgent.getAID()) * 2;
+                priceBet.setContent(String.valueOf(agentsPaticipant.get(myAgent.getAID()) * 2));
+                getAgent().send(priceBet);
+            }
+            if (myAgent.getLocalName().equals("AgentVESProducer")) {
+                vesPrice = agentsPaticipant.get(myAgent.getAID()) * 2;
+                priceBet.setContent(String.valueOf(agentsPaticipant.get(myAgent.getAID()) * 2));
+                getAgent().send(priceBet);
+            }
+        }
+
+//        log.info("On start price " + " ves " + vesPrice+ " sec " + secPrice+ " tec " + tecPrice);
         done();
     }
 
     @Override
     public void action() {
-        ACLMessage proposesToTopic = getAgent().receive(MessageTemplate.and(MessageTemplate.MatchTopic(topic), MessageTemplate.MatchPerformative(ACLMessage.INFORM)));
-        if(proposesToTopic!=null) {
-            Gson gson = new Gson();
-            log.info("Пришло " + proposesToTopic );
-            if(proposesToTopic.getContent().split(" ").length > 3) {
-                String[] newArray = Arrays.copyOf(proposesToTopic.getContent().split(" "), proposesToTopic.getContent().split(" ").length - 1);
-                proposesToTopic.setContent(String.join(" ", newArray));
-            }
-            log.info("Пришло ред " + proposesToTopic );
-            SendTaskDto sendTaskDto = gson.fromJson(proposesToTopic.getContent().split(" ")[0], SendTaskDto.class);
-            if (agentsPaticipant == null) {
-                agentsPaticipant = new HashMap<>();
-            }
-            if (!agentsPaticipant.containsKey(proposesToTopic.getSender())) {
-                agentsPaticipant.put(proposesToTopic.getSender(), Double.valueOf(proposesToTopic.getContent().split(" ")[1]));
-            }
+        debate();
+    }
 
-            if (agentsPaticipant.containsKey(myAgent.getAID())) {
-                ACLMessage myPropose = new ACLMessage(ACLMessage.INFORM);
-                myPropose.addReceiver(topic);
+    public void debate() {
+        if (agentsPaticipant.containsKey(myAgent.getAID())) {
 
-                if(!myAgent.getLocalName().equals(proposesToTopic.getSender().getLocalName()) ) {
-                    if(myAgent.getLocalName().equals("AgentTECProducer")) {
-                        if(proposesToTopic.getSender().equals("AgentVESProducer")) {
-                            vesPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
-                            log.info("Смотрим цены  " + vesPrice + " ves" + secPrice + " sec");
-                        }
-                        if(proposesToTopic.getSender().equals("AgentSECProducer")) {
-                            secPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
-                        }
-                        if(sendTaskDto.getMyMaxPrice() < Double.valueOf(proposesToTopic.getContent().split(" ")[2])) {
-                            if(sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
-                                tecPrice = sendTaskDto.getMyMaxPrice();
+            ACLMessage price = getAgent().receive(MessageTemplate.and(MessageTemplate.MatchTopic(topic), MessageTemplate.MatchPerformative(ACLMessage.INFORM)));
+            if (price !=null) {
+                if (agentsPaticipant.size() == 1) {
+                    ACLMessage myPropose = new ACLMessage(ACLMessage.INFORM);
+                    if (WaitForProposeBeh.clientMaxPrice <= Double.parseDouble(price.getContent())) {
+                        if(WaitForProposeBeh.clientMaxPrice >= Double.parseDouble(price.getContent())/2) {
+                            double tmp = WaitForProposeBeh.clientMaxPrice;
+                            if (myAgent.getLocalName().equals("AgentVESProducer")) {
+                                myPropose.setContent(String.valueOf(tmp));
+                                currentMsgVes = (ACLMessage) myPropose.clone();
+                            }
+                            if (myAgent.getLocalName().equals("AgentTECProducer")) {
+                                myPropose.setContent(String.valueOf(tmp));
+                                currentMsgTec = (ACLMessage) myPropose.clone();
+                            }
+                            if (myAgent.getLocalName().equals("AgentSecProducer")) {
+                                myPropose.setContent(String.valueOf(tmp));
+                                currentMsgSec = (ACLMessage) myPropose.clone();
                             }
                         }
-                        if(vesPrice <= tecPrice) {
-                            if (sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
-                                double tmp = tecPrice;
-                                tecPrice = 0.95*vesPrice;
-                                if (tecPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                    }
+                }
+                if ( agentsPaticipant.size() > 1) {
+                    ACLMessage myPropose = new ACLMessage(ACLMessage.INFORM);
+                    myPropose.addReceiver(topic);
+                    if(!myAgent.getLocalName().equals(price.getSender().getLocalName()) ) {
+                        if(myAgent.getLocalName().equals("AgentTECProducer")) {
+                            if(WaitForProposeBeh.clientMaxPrice < Double.valueOf(price.getContent())) {
+                                double tmp = WaitForProposeBeh.clientMaxPrice;
+                                if(WaitForProposeBeh.clientMaxPrice >= agentsPaticipant.get(myAgent.getAID())) {
                                     tecPrice = tmp;
                                 }
-                            } else {
-                                log.info("ТЭЦ выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + tecPrice);
                             }
-
-                        }
-                        if(secPrice <= tecPrice) {
-                            if (sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
-                                double tmp = tecPrice;
-                                tecPrice = 0.95*secPrice;
-                                if (tecPrice <= agentsPaticipant.get(myAgent.getAID())) {
-                                    tecPrice = tmp;
+                            if(vesPrice <= tecPrice) {
+                                if (WaitForProposeBeh.clientMaxPrice >= agentsPaticipant.get(myAgent.getAID())) {
+                                    double tmp = tecPrice;
+                                    tecPrice = 0.95*vesPrice;
+//                                log.info("Тэц конкурирую с вэс " + tecPrice + vesPrice);
+                                    if (tecPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                        tecPrice = tmp;
+                                    }
+                                } else {
+//                                log.info("ТЭЦ выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + tecPrice);
                                 }
-                            } else {
-                                log.info("ТЭЦ выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + tecPrice);
-                            }
 
-                        }
-                        if(vesPrice > tecPrice || secPrice > tecPrice) {
-                        }
-                        List<String> priceListTEC = new ArrayList<>(List.of(proposesToTopic.getContent().split(" ")));
-                        priceListTEC.remove(2);
-                        priceListTEC.remove(1);
-                        priceListTEC.add(String.valueOf(agentsPaticipant.get(myAgent.getAID())));
-                        priceListTEC.add(String.valueOf(tecPrice));
-                        myPropose.setContent(priceListTEC.stream().collect(Collectors.joining(" ")));
-                        currentMsgTec = (ACLMessage) myPropose.clone();
-                        log.info("Отсылка своей ставки " + myPropose);
-                        getAgent().send(myPropose);
-                    }
-
-                    if(myAgent.getLocalName().equals("AgentSECProducer")) {
-                        if(proposesToTopic.getSender().equals("AgentTECProducer")) {
-                            tecPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
-                        }
-                        if(proposesToTopic.getSender().equals("AgentVESProducer")) {
-                            vesPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
-                        }
-                        if(sendTaskDto.getMyMaxPrice() < Double.valueOf(proposesToTopic.getContent().split(" ")[2])) {
-                            if(sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
-                                secPrice = sendTaskDto.getMyMaxPrice();
                             }
+                            if(secPrice <= tecPrice) {
+                                if (WaitForProposeBeh.clientMaxPrice>= Double.valueOf(price.getContent())) {
+                                    double tmp = tecPrice;
+                                    tecPrice = 0.95*secPrice;
+//                                log.info("Тэц конкурирую с сэц " + tecPrice + vesPrice);
+                                    if (tecPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                        tecPrice = tmp;
+                                    }
+                                } else {
+//                                log.info("ТЭЦ выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + tecPrice);
+                                }
+
+                            }
+                            if(vesPrice > tecPrice || secPrice > tecPrice) {
+                            }
+                            myPropose.setContent(String.valueOf(tecPrice));
+                            currentMsgTec = (ACLMessage) myPropose.clone();
+//                        log.info("Отсылка своей ставки " + myPropose);
+                            getAgent().send(myPropose);
                         }
-                        if(tecPrice <= secPrice) {
-                            if (sendTaskDto.getMyMaxPrice() >= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
-                                double tmp = secPrice;
-                                secPrice = 0.95*tecPrice;
-                                if (secPrice <= agentsPaticipant.get(myAgent.getAID())) {
+
+                        if(myAgent.getLocalName().equals("AgentSECProducer")) {
+                            if(WaitForProposeBeh.clientMaxPrice < Double.valueOf(price.getContent())) {
+                                double tmp = WaitForProposeBeh.clientMaxPrice;
+                                if(WaitForProposeBeh.clientMaxPrice >= agentsPaticipant.get(myAgent.getAID())) {
                                     secPrice = tmp;
                                 }
-                            } else {
-                                log.info("СЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + secPrice);
                             }
-
-                        }
-                        if(vesPrice <= secPrice) {
-                            if (sendTaskDto.getMyMaxPrice() >= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
-                                double tmp = secPrice;
-                                secPrice = 0.95*vesPrice;
-                                if (secPrice <= agentsPaticipant.get(myAgent.getAID())) {
-                                    secPrice = tmp;
+                            if(tecPrice <= secPrice) {
+                                if (WaitForProposeBeh.clientMaxPrice >= agentsPaticipant.get(myAgent.getAID())) {
+                                    double tmp = secPrice;
+                                    secPrice = 0.95*tecPrice;
+                                    if (secPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                        secPrice = tmp;
+                                    }
+                                } else {
+//                                log.info("СЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + secPrice);
                                 }
-                            } else {
-                                log.info("ВЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + secPrice);
-                            }
 
-                        }
-                        if(tecPrice > secPrice || vesPrice > secPrice) {
-                        }
-                        List<String> priceListSEC = new ArrayList<>(List.of(proposesToTopic.getContent().split(" ")));
-                        priceListSEC.remove(2);
-                        priceListSEC.remove(1);
-                        priceListSEC.add(String.valueOf(agentsPaticipant.get(myAgent.getAID())));
-                        priceListSEC.add(String.valueOf(secPrice));
-                        myPropose.setContent(priceListSEC.stream().collect(Collectors.joining(" ")));
-                        currentMsgSec = (ACLMessage) myPropose.clone();
-                        log.info("Отсылка своей ставки " + myPropose);
-                        getAgent().send(myPropose);
-                    }
-
-                    if(myAgent.getLocalName().equals("AgentVESProducer")) {
-                        if(proposesToTopic.getSender().equals("AgentTECProducer")) {
-                            tecPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
-                        }
-                        if(proposesToTopic.getSender().equals("AgentSECProducer")) {
-                            secPrice = Double.parseDouble(proposesToTopic.getContent().split(" ")[2]);
-                        }
-                        if(sendTaskDto.getMyMaxPrice() < Double.valueOf(proposesToTopic.getContent().split(" ")[2])) {
-                            if(sendTaskDto.getMyMaxPrice() >= Double.valueOf(proposesToTopic.getContent().split(" ")[1])) {
-                                vesPrice = sendTaskDto.getMyMaxPrice();
                             }
+                            if(vesPrice <= secPrice) {
+                                if (WaitForProposeBeh.clientMaxPrice >= agentsPaticipant.get(myAgent.getAID())) {
+                                    double tmp = secPrice;
+                                    secPrice = 0.95*vesPrice;
+                                    if (secPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                        secPrice = tmp;
+                                    }
+                                } else {
+//                                log.info("ВЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + secPrice);
+                                }
+
+                            }
+                            if(tecPrice > secPrice || vesPrice > secPrice) {
+                            }
+                            myPropose.setContent(String.valueOf(secPrice));
+                            currentMsgSec = (ACLMessage) myPropose.clone();
+//                        log.info("Отсылка своей ставки " + myPropose);
+                            getAgent().send(myPropose);
                         }
-                        if(tecPrice <= vesPrice) {
-                            if (sendTaskDto.getMyMaxPrice() >= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
-                                double tmp = vesPrice;
-                                vesPrice = 0.95*tecPrice;
-                                if (vesPrice <= agentsPaticipant.get(myAgent.getAID())) {
+
+                        if(myAgent.getLocalName().equals("AgentVESProducer")) {
+                            if(WaitForProposeBeh.clientMaxPrice< Double.valueOf(price.getContent())) {
+                                double tmp = WaitForProposeBeh.clientMaxPrice;
+                                if(WaitForProposeBeh.clientMaxPrice >= agentsPaticipant.get(myAgent.getAID())) {
                                     vesPrice = tmp;
                                 }
-                            } else {
-                                log.info("ВЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + vesPrice);
                             }
-
-                        }
-                        if(secPrice <= vesPrice) {
-                            if (sendTaskDto.getMyMaxPrice() >= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
-                                double tmp = vesPrice;
-                                vesPrice = 0.95*secPrice;
-                                if (vesPrice <= agentsPaticipant.get(myAgent.getAID())) {
-                                    vesPrice = tmp;
+                            if(tecPrice <= vesPrice) {
+                                if (WaitForProposeBeh.clientMaxPrice >= agentsPaticipant.get(myAgent.getAID())) {
+                                    double tmp = vesPrice;
+                                    vesPrice = 0.95*tecPrice;
+                                    if (vesPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                        vesPrice = tmp;
+                                    }
+                                } else {
+//                                log.info("ВЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + vesPrice);
                                 }
-                            } else {
-                                log.info("ВЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + vesPrice);
-                            }
 
+                            }
+                            if(secPrice <= vesPrice) {
+                                if (WaitForProposeBeh.clientMaxPrice >= agentsPaticipant.get(myAgent.getAID())) {
+                                    double tmp = vesPrice;
+                                    vesPrice = 0.95*secPrice;
+                                    if (vesPrice <= agentsPaticipant.get(myAgent.getAID())) {
+                                        vesPrice = tmp;
+                                    }
+                                } else {
+//                                log.info("ВЭС выходит из торогов изза того, что будет продавать в минус на текущей ситуации" + vesPrice);
+                                }
+
+                            }
+                            if(tecPrice > vesPrice || secPrice > vesPrice) {
+                            }
+                            myPropose.setContent(String.valueOf(vesPrice));
+                            currentMsgVes = (ACLMessage) myPropose.clone();
+//                        log.info("Отсылка своей ставки " + myPropose);
+                            getAgent().send(myPropose);
                         }
-                        if(tecPrice > vesPrice || secPrice > vesPrice) {
-                        }
-                        List<String> priceListVES = new ArrayList<>(List.of(proposesToTopic.getContent().split(" ")));
-                        priceListVES.remove(2);
-                        priceListVES.remove(1);
-                        priceListVES.add(String.valueOf(agentsPaticipant.get(myAgent.getAID())));
-                        priceListVES.add(String.valueOf(vesPrice));
-                        myPropose.setContent(priceListVES.stream().collect(Collectors.joining(" ")));
-                        currentMsgVes = (ACLMessage) myPropose.clone();
-                        log.info("Отсылка своей ставки " + myPropose);
-                        getAgent().send(myPropose);
                     }
+                    flagOfFirstIter = true;
                 }
 
             }
-        } else {
-            block();
+
         }
     }
-
     @Override
     public boolean done() {
-        if (DebateTimeout.ending) {
-            myPropose = null;
-        }
         return DebateTimeout.ending;
     }
 
     @Override
     public int onEnd() {
-
         return 0;
     }
 
-    private void oneParticipantCase(ACLMessage proposesToTopic, SendTaskDto sendTaskDto) {
-        if (agentsPaticipant.size() == 1) {
-            ACLMessage toDistributer = new ACLMessage(ACLMessage.CONFIRM);
-            if (sendTaskDto.getMyMaxPrice() <= Double.parseDouble(proposesToTopic.getContent().split(" ")[1])) {
-                agentsPaticipant.put(myAgent.getAID(), sendTaskDto.getMyMaxPrice());
-                toDistributer.setContent(String.valueOf(new ArrayList<>(agentsPaticipant.values()).get(0)));
-                toDistributer.addReceiver(topic);
-                log.info("No more concurents, i am sending propose " + toDistributer);
-                getAgent().send(toDistributer);
-            } else {
-                log.info("the price is too low for me");
-            }
-            end = true;
-        }
-    }
+//    private void oneParticipantCase(ACLMessage proposesToTopic, SendTaskDto sendTaskDto) {
+//        if (agentsPaticipant.size() == 1) {
+//            ACLMessage toDistributer = new ACLMessage(ACLMessage.CONFIRM);
+//            if (WaitForProposeBeh.clientMaxPrice <= Double.parseDouble(proposesToTopic.getContent())) {
+//                toDistributer.setContent(WaitForProposeBeh.clientMaxPrice);
+//                toDistributer.addReceiver(topic);
+//                log.info("No more concurents, i am sending propose " + toDistributer);
+//                getAgent().send(toDistributer);
+//            } else {
+//                log.info("the price is too low for me");
+//            }
+//            end = true;
+//        }
+//    }
 
-    private void moreThenOneParticipant(ACLMessage proposesToTopic, SendTaskDto sendTaskDto, ACLMessage myPropose) {
-
-    }
 }
 
 

@@ -17,4 +17,6 @@ public class CfgConsumerGraphic {
     private List<Double> power;
     @Getter
     private Double pricePerUnit;
+    @Getter
+    private String myDistibutter;
 }

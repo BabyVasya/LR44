@@ -24,30 +24,30 @@
 <!--    <power>16.45</power>-->
 <!--    <power>11.75</power>-->
 
-    <power>3</power>
+    <power>4</power>
     <power>5</power>
     <power>4</power>
     <power>7</power>
     <power>8</power>
+    <power>9</power>
+    <power>1</power>
+    <power>2</power>
     <power>3</power>
     <power>3</power>
+    <power>1</power>
+    <power>3</power>
+    <power>11</power>
+    <power>3</power>
+    <power>9</power>
+    <power>10</power>
+    <power>10</power>
     <power>3</power>
     <power>3</power>
+    <power>2</power>
+    <power>6</power>
     <power>3</power>
     <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
-    <power>3</power>
+    <power>12</power>
 
     <time>1</time>
     <time>2</time>
@@ -74,5 +74,6 @@
     <time>23</time>
     <time>24</time>
 
-    <price>50</price>
+    <pricePerUnit>50</pricePerUnit>
+    <myDistibutter>AgentDistributer1</myDistibutter>
 </graphic>

@@ -6,6 +6,9 @@ import jade.core.behaviours.ParallelBehaviour;
 import jade.lang.acl.ACLMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.example.Consumer.SendTaskDto;
+import org.example.TopicHelper;
+
+import static org.example.Producer.AuctionPFSMSubbeh.AuctionDebate.agentsPaticipant;
 
 
 @Slf4j
@@ -27,40 +30,30 @@ public class DebateParallel extends ParallelBehaviour {
 
     @Override
     public int onEnd() {
-        if (AuctionDebate.currentMsgVes != null && myAgent.getLocalName().equals("AgentVESProducer")) {
-            ACLMessage end = new ACLMessage(ACLMessage.AGREE);
-            end.addReceiver(new AID("AgentDistributer1", false));
-            Gson gson = new Gson();
-            SendTaskDto sendTaskDto = gson.fromJson(AuctionDebate.currentMsgVes.getContent().split(" ")[0], SendTaskDto.class);
-            end.setContent(AuctionDebate.currentMsgVes.getContent().split(" ")[2] + " " + sendTaskDto);
-            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgVes.getContent());
-            AuctionDebate.currentMsgVes = null;
-            getAgent().send(end);
-        }
-        if (AuctionDebate.currentMsgTec != null && myAgent.getLocalName().equals("AgentTECProducer")) {
-            ACLMessage end = new ACLMessage(ACLMessage.AGREE);
-            end.addReceiver(new AID("AgentDistributer1", false));
-            Gson gson = new Gson();
-            SendTaskDto sendTaskDto = gson.fromJson(AuctionDebate.currentMsgTec.getContent().split(" ")[0], SendTaskDto.class);
-            end.setContent(AuctionDebate.currentMsgTec.getContent().split(" ")[2] + " " + sendTaskDto);
-            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgTec.getContent());
-            AuctionDebate.currentMsgTec = null;
-            getAgent().send(end);
-        }
-        if (AuctionDebate.currentMsgSec != null && myAgent.getLocalName().equals("AgentSECProducer")) {
-            ACLMessage end = new ACLMessage(ACLMessage.AGREE);
-            end.addReceiver(new AID("AgentDistributer1", false));
-            Gson gson = new Gson();
-            SendTaskDto sendTaskDto = gson.fromJson(AuctionDebate.currentMsgSec.getContent().split(" ")[0], SendTaskDto.class);
-            end.setContent(AuctionDebate.currentMsgSec.getContent().split(" ")[2] + " " + sendTaskDto);
-            log.info("Sending my price " + end.getContent() + " last msg " + AuctionDebate.currentMsgSec.getContent());
-            AuctionDebate.currentMsgSec = null;
-            getAgent().send(end);
-        }
-        AuctionDebate.vesPrice = 0;
-        AuctionDebate.tecPrice = 0;
-        AuctionDebate.secPrice = 0;
+        ACLMessage end = new ACLMessage(ACLMessage.AGREE);
+        end.addReceiver(TopicHelper.register(myAgent, topicName));
+        if(agentsPaticipant.containsKey(myAgent.getAID())) {
+//            log.info("я зашёл ");
+            if (AuctionDebate.currentMsgVes != null && myAgent.getLocalName().equals("AgentVESProducer")) {
 
+                end.setContent(String.valueOf(AuctionDebate.currentMsgVes.getContent()));
+//            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgVes.getContent());
+
+                getAgent().send(end);
+            }
+            if (AuctionDebate.currentMsgTec != null && myAgent.getLocalName().equals("AgentTECProducer")) {
+                end.setContent(String.valueOf(AuctionDebate.currentMsgTec.getContent()));
+//            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgTec.getContent());
+
+                getAgent().send(end);
+            }
+            if (AuctionDebate.currentMsgSec != null && myAgent.getLocalName().equals("AgentSECProducer")) {
+                end.setContent(String.valueOf(AuctionDebate.currentMsgSec.getContent()));
+//            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgSec.getContent());
+
+                getAgent().send(end);
+            }
+        }
         return 0;
     }
 }

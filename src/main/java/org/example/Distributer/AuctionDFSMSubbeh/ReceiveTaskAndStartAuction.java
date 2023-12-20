@@ -36,6 +36,7 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
         if (taskFromConsumer !=null) {
             SendTaskDto msg = receiveTask(taskFromConsumer);
             startAuction(msg);
+            log.info("Task received " + msg);
         }else {
             block();
         }
