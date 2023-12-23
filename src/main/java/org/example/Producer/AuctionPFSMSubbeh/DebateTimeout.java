@@ -25,5 +25,6 @@ public class DebateTimeout extends WakerBehaviour {
     protected void onWake() {
         ending = true;
         AuctionDebate.flagOfFirstIter = false;
+//        log.info("Timeout debate ");
     }
 }

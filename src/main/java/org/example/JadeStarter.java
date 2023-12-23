@@ -16,10 +16,10 @@ public class JadeStarter {
         Map<String, Class<?>> agents = Map.of(
                 "AgentTransportConsumer", AgentConsumer.class,
                 "AgentPishPromConsumer", AgentConsumer.class,
-////                "AgentChimPromConsumer", AgentConsumer.class,
+                "AgentChimPromConsumer", AgentConsumer.class,
                 "AgentDistributer1", AgentDistributer.class,
                 "AgentDistributer2", AgentDistributer.class,
-//                "AgentDistributer3", AgentDistributer.class,
+                "AgentDistributer3", AgentDistributer.class,
                 "AgentTECProducer", AgentProducer.class,
                 "AgentSECProducer", AgentProducer.class,
                 "AgentVESProducer", AgentProducer.class

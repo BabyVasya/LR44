@@ -52,6 +52,7 @@ public class AuctionDebate extends Behaviour {
         topic = TopicHelper.register(myAgent, this.topicName);
         ACLMessage priceBet = new ACLMessage(ACLMessage.INFORM);
         priceBet.addReceiver(topic);
+//        log.info("Debate " + agentsPaticipant);
         if (agentsPaticipant.containsKey(myAgent.getAID())) {
             if (myAgent.getLocalName().equals("AgentTECProducer")) {
                 tecPrice = agentsPaticipant.get(myAgent.getAID()) * 2;
@@ -81,7 +82,6 @@ public class AuctionDebate extends Behaviour {
 
     public void debate() {
         if (agentsPaticipant.containsKey(myAgent.getAID())) {
-
             ACLMessage price = getAgent().receive(MessageTemplate.and(MessageTemplate.MatchTopic(topic), MessageTemplate.MatchPerformative(ACLMessage.INFORM)));
             if (price !=null) {
                 if (agentsPaticipant.size() == 1) {
@@ -244,20 +244,20 @@ public class AuctionDebate extends Behaviour {
         return 0;
     }
 
-//    private void oneParticipantCase(ACLMessage proposesToTopic, SendTaskDto sendTaskDto) {
-//        if (agentsPaticipant.size() == 1) {
-//            ACLMessage toDistributer = new ACLMessage(ACLMessage.CONFIRM);
-//            if (WaitForProposeBeh.clientMaxPrice <= Double.parseDouble(proposesToTopic.getContent())) {
-//                toDistributer.setContent(WaitForProposeBeh.clientMaxPrice);
-//                toDistributer.addReceiver(topic);
-//                log.info("No more concurents, i am sending propose " + toDistributer);
-//                getAgent().send(toDistributer);
-//            } else {
-//                log.info("the price is too low for me");
-//            }
-//            end = true;
-//        }
-//    }
+    private void oneParticipantCase(ACLMessage myPropose, String agentLocalName, double clientMaxPrice) {
+        double contentPrice = Double.parseDouble(myPropose.getContent());
+        if (clientMaxPrice <= contentPrice && clientMaxPrice >= contentPrice / 2) {
+            myPropose.setContent(String.valueOf(clientMaxPrice));
+
+            if (agentLocalName.equals("AgentVESProducer")) {
+                currentMsgVes = (ACLMessage) myPropose.clone();
+            } else if (agentLocalName.equals("AgentTECProducer")) {
+                currentMsgTec = (ACLMessage) myPropose.clone();
+            } else if (agentLocalName.equals("AgentSecProducer")) {
+                currentMsgSec = (ACLMessage) myPropose.clone();
+            }
+        }
+    }
 
 }
 

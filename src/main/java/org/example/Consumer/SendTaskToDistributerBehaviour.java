@@ -9,6 +9,7 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import lombok.extern.slf4j.Slf4j;
+import org.example.Distributer.AuctionDFSMSubbeh.MakingDesicion;
 import org.example.VirtualTime;
 
 
@@ -19,7 +20,8 @@ public class SendTaskToDistributerBehaviour extends Behaviour {
     private CfgConsumerGraphic graphic;
     private Agent agent;
     private final Gson gson = new Gson();
-    private boolean completed = false;
+    public static boolean completedOneHour;
+    private int currentTime;
 
     public SendTaskToDistributerBehaviour(CfgConsumerGraphic cfg, Agent agent) {
         this.graphic = cfg;
@@ -28,32 +30,27 @@ public class SendTaskToDistributerBehaviour extends Behaviour {
 
     @Override
     public void action() {
-        if (!completed) {
-            sendToDistributer();
-            completed = true;
-        } else {
+        sendToDistributer();
+    }
+
+
+    private void sendToDistributer() {
+        ACLMessage newHour = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+        if (newHour != null) {
+            ACLMessage taskMsg = new ACLMessage(ACLMessage.PROXY);
+            taskMsg.addReceiver(new AID(graphic.getMyDistibutter(), false));
+            taskMsg.setContent(newHour.getContent());
+            log.info("Task " + myAgent.getLocalName() + newHour);
+            getAgent().send(taskMsg);
+            MakingDesicion.proposesList.clear();
+        }else {
             block();
         }
     }
-
-
-    public void resetState() {
-        completed = false;
-    }
-
-    private void sendToDistributer() {
-        ACLMessage taskMsg = new ACLMessage(ACLMessage.PROXY);
-        taskMsg.addReceiver(new AID(graphic.getMyDistibutter(), false));
-        SendTaskDto sendTaskDto = new SendTaskDto(graphic.getPower().get(graphic.getTime().indexOf(VirtualTime.currentHour)), graphic.getPricePerUnit()*graphic.getPower().get(graphic.getTime().indexOf(VirtualTime.currentHour))*6);
-        taskMsg.setContent(gson.toJson(sendTaskDto));
-        log.info("Task " + myAgent.getLocalName() + taskMsg);
-        getAgent().send(taskMsg);
-    }
     @Override
     public boolean done() {
-        return true;
+        return false;
     }
-
 
 
 }

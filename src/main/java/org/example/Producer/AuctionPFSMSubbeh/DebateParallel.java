@@ -31,29 +31,30 @@ public class DebateParallel extends ParallelBehaviour {
     @Override
     public int onEnd() {
         ACLMessage end = new ACLMessage(ACLMessage.AGREE);
-        end.addReceiver(TopicHelper.register(myAgent, topicName));
+        end.addReceiver(new AID(WaitForProposeParallel.msg.getSender().getLocalName(), false));
         if(agentsPaticipant.containsKey(myAgent.getAID())) {
-//            log.info("я зашёл ");
+            log.info("я зашёл " + agentsPaticipant);
             if (AuctionDebate.currentMsgVes != null && myAgent.getLocalName().equals("AgentVESProducer")) {
-
                 end.setContent(String.valueOf(AuctionDebate.currentMsgVes.getContent()));
-//            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgVes.getContent());
+//            log.info("Sending my price " + end+ " last msg " + AuctionDebate.currentMsgVes.getContent());
 
                 getAgent().send(end);
             }
             if (AuctionDebate.currentMsgTec != null && myAgent.getLocalName().equals("AgentTECProducer")) {
                 end.setContent(String.valueOf(AuctionDebate.currentMsgTec.getContent()));
-//            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgTec.getContent());
+//            log.info("Sending my price " + end+ " last msg " + AuctionDebate.currentMsgTec.getContent());
 
                 getAgent().send(end);
             }
             if (AuctionDebate.currentMsgSec != null && myAgent.getLocalName().equals("AgentSECProducer")) {
                 end.setContent(String.valueOf(AuctionDebate.currentMsgSec.getContent()));
-//            log.info("Sending my price " + end.getContent()+ " last msg " + AuctionDebate.currentMsgSec.getContent());
+//            log.info("Sending my price " + end+ " last msg " + AuctionDebate.currentMsgSec.getContent());
 
                 getAgent().send(end);
             }
+            return 1;
         }
         return 0;
     }
+
 }

@@ -1,56 +1,43 @@
 package org.example.Consumer;
 
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
-import jade.core.behaviours.SequentialBehaviour;
-import jade.core.behaviours.TickerBehaviour;
-import lombok.extern.slf4j.Slf4j;
-import org.example.Producer.CfgProduceGraphic;
+import lombok.SneakyThrows;
 import org.example.ReadConsumerConfigInterface;
-import org.example.VirtualTime;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-
-@Slf4j
 public class AgentConsumer extends Agent implements ReadConsumerConfigInterface {
-    private static boolean done;
-    private static final AtomicBoolean isBehaviorRunning = new AtomicBoolean(done);
-
+    @SneakyThrows
     @Override
     protected void setup() {
-        addBehaviour(new SequentialBehaviour());
+//        asyncAgentsConsumersStart("AgentTransportConsumer", 0);
+//        asyncAgentsConsumersStart("AgentPishPromConsumer", 3200);
+//        asyncAgentsConsumersStart("AgentChimPromConsumer", 6400);
+        if(getLocalName().equals("AgentTransportConsumer")) {
+//            addBehaviour(new NewHourBehavoiurTransport(readConfigConsumer("AgentTransportConsumer"), this));
+//            addBehaviour(new SendTaskToDistributerBehaviour(readConfigConsumer("AgentTransportConsumer"), this));
+//            addBehaviour(new ReceiveAnswerFromDistributerBehaviour());
+                    asyncAgentsConsumersStart("AgentTransportConsumer", 0);
+        }
+        if(getLocalName().equals("AgentPishPromConsumer")) {
+
+//            addBehaviour(new NewHourBehavoiurPishProm(readConfigConsumer("AgentPishPromConsumer"), this));
+//            addBehaviour(new SendTaskToDistributerBehaviour(readConfigConsumer("AgentPishPromConsumer"), this));
+//            addBehaviour(new ReceiveAnswerFromDistributerBehaviour());
+            asyncAgentsConsumersStart("AgentPishPromConsumer", 3200);
+        }
+        if(getLocalName().equals("AgentChimPromConsumer")) {
+//            addBehaviour(new NewHourBehavoiurChimProm(readConfigConsumer("AgentChimPromConsumer"), this));
+//            addBehaviour(new SendTaskToDistributerBehaviour(readConfigConsumer("AgentChimPromConsumer"), this));
+//            addBehaviour(new ReceiveAnswerFromDistributerBehaviour());
+            asyncAgentsConsumersStart("AgentChimPromConsumer", 6400);
+        }
     }
 
-    private class SequentialBehaviour extends Behaviour {
 
-//        public SequentialBehaviour(Agent a) {
-//            super(a, 3301);
-//        }
-
-        @Override
-        public void action() {
-            if (isBehaviorRunning.compareAndSet(done, true)) {
-                // Выполняем SendTaskToDistributerBehaviour только если флаг равен false
-                CfgConsumerGraphic cfgGraphic = readConfigConsumer(myAgent.getLocalName());
-                SendTaskToDistributerBehaviour sendTaskBehaviour = new SendTaskToDistributerBehaviour(cfgGraphic, myAgent);
-                ReceiveAnswerFromDistributerBehaviour receiveAnswerFromDistributerBehaviour = new ReceiveAnswerFromDistributerBehaviour();
-                myAgent.addBehaviour(sendTaskBehaviour);
-                myAgent.addBehaviour(receiveAnswerFromDistributerBehaviour);
-            }
-        }
-
-        @Override
-        public boolean done() {
-            return done;
-        }
-
-    }
 
 
     @Override
@@ -69,5 +56,15 @@ public class AgentConsumer extends Agent implements ReadConsumerConfigInterface 
             }
         }
         return cfgGraphic;
+    }
+
+    @SneakyThrows
+    private void asyncAgentsConsumersStart(String agentLocalName, int asyncTime ) {
+            Thread.sleep(asyncTime );
+            if (getLocalName().equals(agentLocalName)) {
+                addBehaviour(new NewHourBehavoiurTransport(readConfigConsumer(agentLocalName), this));
+            }
+            addBehaviour(new SendTaskToDistributerBehaviour(readConfigConsumer(agentLocalName), this));
+            addBehaviour(new ReceiveAnswerFromDistributerBehaviour());
     }
 }

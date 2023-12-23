@@ -71,6 +71,7 @@ public class WaitForProposeBeh extends Behaviour implements ReadProducerConfigIn
     @Override
     public void action() {
         if(proposeMsg!=null) {
+//            log.info("Propose " + proposeMsg.getContent());
             SendTaskDto fromDistributer = gson.fromJson(proposeMsg.getContent(), SendTaskDto.class);
             clientMaxPrice = fromDistributer.getMyMaxPrice();
             cfgProduceGraphicTEC = readConfigProducer("AgentTECProducer");
@@ -94,15 +95,19 @@ public class WaitForProposeBeh extends Behaviour implements ReadProducerConfigIn
             if(myAgent.getLocalName().equals("AgentTECProducer") && tecAgreeWithtask) {
                 agentsPaticipant.put(myAgent.getAID(), cfgProduceGraphicTEC.getPrice().get(cfgProduceGraphicTEC.getTime().indexOf(VirtualTime.currentHour)));
                 DebateTimeout.ending = false;
+
             }
             if(myAgent.getLocalName().equals("AgentSECProducer") && secAgreeWithtask) {
                 agentsPaticipant.put(myAgent.getAID(), cfgProduceGraphicSEC.getPrice().get(cfgProduceGraphicSEC.getTime().indexOf(VirtualTime.currentHour)));
                 DebateTimeout.ending = false;
+
             }
             if(myAgent.getLocalName().equals("AgentVESProducer") && vesAgreeWithtask) {
                 agentsPaticipant.put(myAgent.getAID(), cfgProduceGraphicVES.getPrice().get(cfgProduceGraphicVES.getTime().indexOf(VirtualTime.currentHour)));
                 DebateTimeout.ending = false;
+
             }
+
 //            log.info("Цены tec " + AuctionDebate.tecPrice + " ves " + AuctionDebate.vesPrice + " sec " + AuctionDebate.secPrice);
 
         }

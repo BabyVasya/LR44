@@ -17,6 +17,8 @@ public class AuctionProducerFSM extends FSMBehaviour {
     public AuctionProducerFSM(String topicName, ACLMessage msg){
         this.topicName = topicName;
         this.msg = msg;
+//        log.info("Problem producerFSM???");
+
     }
     @Override
     public void onStart() {

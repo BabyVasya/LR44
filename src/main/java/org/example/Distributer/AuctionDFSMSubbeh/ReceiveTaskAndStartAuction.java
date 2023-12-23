@@ -36,7 +36,8 @@ public class ReceiveTaskAndStartAuction extends Behaviour {
         if (taskFromConsumer !=null) {
             SendTaskDto msg = receiveTask(taskFromConsumer);
             startAuction(msg);
-            log.info("Task received " + msg);
+            log.info("Task received " + msg.getMyMaxPrice() + msg.getRequiredPowerPerHour());
+            end = true;
         }else {
             block();
         }

@@ -1,6 +1,7 @@
 package org.example.Producer;
 
 import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ public class CommonBeh extends Behaviour {
     public void action() {
         ACLMessage proposeMsg = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE));
         if (proposeMsg!=null) {
+//            log.info("Common beh " +proposeMsg.getContent());
             myAgent.addBehaviour(new AuctionProducerFSM("Auction", proposeMsg));
         } else block();
     }

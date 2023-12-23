@@ -10,7 +10,16 @@ public class CommonBehDis extends Behaviour {
     public void action() {
         ACLMessage taskFromConsumer = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.PROXY));
         if (taskFromConsumer!=null) {
-            myAgent.addBehaviour(new AuctionDistributerFSM(taskFromConsumer));
+            if(taskFromConsumer.getSender().getLocalName().equals("AgentTransportConsumer") && myAgent.getLocalName().equals("AgentDistributer1")) {
+                myAgent.addBehaviour(new AuctionDistributerFSM(taskFromConsumer));
+            }
+            if(taskFromConsumer.getSender().getLocalName().equals("AgentPishPromConsumer") && myAgent.getLocalName().equals("AgentDistributer2")) {
+                myAgent.addBehaviour(new AuctionDistributerFSM(taskFromConsumer));
+            }
+            if(taskFromConsumer.getSender().getLocalName().equals("AgentChimPromConsumer") && myAgent.getLocalName().equals("AgentDistributer3")) {
+                myAgent.addBehaviour(new AuctionDistributerFSM(taskFromConsumer));
+            }
+
         }
 
     }

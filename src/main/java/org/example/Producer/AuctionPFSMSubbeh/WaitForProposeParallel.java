@@ -11,7 +11,7 @@ public class WaitForProposeParallel extends ParallelBehaviour {
     private String topicName;
 
     private WaitForProposeBeh waitForProposeBeh;
-    private ACLMessage msg;
+    public static ACLMessage msg;
 
     public WaitForProposeParallel(String topicName, ACLMessage msg) {
         super(WHEN_ANY);
@@ -23,7 +23,7 @@ public class WaitForProposeParallel extends ParallelBehaviour {
     public void onStart() {
         waitForProposeBeh = new WaitForProposeBeh(topicName, msg);
         this.addSubBehaviour(waitForProposeBeh);
-        WaitForProposeTimeout waitForProposeTimeout = new WaitForProposeTimeout(myAgent, 200);
+        WaitForProposeTimeout waitForProposeTimeout = new WaitForProposeTimeout(myAgent, 50);
         this.addSubBehaviour(waitForProposeTimeout);
     }
 

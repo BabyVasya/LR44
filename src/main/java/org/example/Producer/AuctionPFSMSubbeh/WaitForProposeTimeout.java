@@ -4,6 +4,8 @@ import jade.core.Agent;
 import jade.core.behaviours.WakerBehaviour;
 import lombok.extern.slf4j.Slf4j;
 
+import static org.example.Producer.AuctionPFSMSubbeh.AuctionDebate.agentsPaticipant;
+
 @Slf4j
 public class WaitForProposeTimeout extends WakerBehaviour {
     public WaitForProposeTimeout(Agent a, long timeout) {
@@ -12,5 +14,7 @@ public class WaitForProposeTimeout extends WakerBehaviour {
 
     @Override
     protected void onWake() {
+//        log.info("TimeOut");
+//        log.info("Particapnts timeot" + agentsPaticipant);
     }
 }

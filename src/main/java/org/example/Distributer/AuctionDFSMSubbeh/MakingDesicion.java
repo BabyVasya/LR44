@@ -23,14 +23,14 @@ public class MakingDesicion extends Behaviour {
     @Override
     public void onStart() {
         topic = TopicHelper.register(myAgent, "Auction");
+        log.info("proposes list cleared " + proposesList);
         proposesList.clear();
-//        log.info("proposes list cleared " + proposesList);
     }
     @Override
     public void action() {
-        ACLMessage fromProducersMsg = getAgent().receive(MessageTemplate.and(MessageTemplate.MatchTopic(topic), MessageTemplate.MatchPerformative(ACLMessage.AGREE)));
+        ACLMessage fromProducersMsg = getAgent().receive(MessageTemplate.MatchPerformative(ACLMessage.AGREE));
         if (fromProducersMsg!=null){
-            log.info(fromProducersMsg.getSender().getLocalName() + fromProducersMsg.getContent());
+            log.info(fromProducersMsg.getSender().getLocalName() + " " +fromProducersMsg.getContent() + " proposeslist " + proposesList);
             proposesList.put(fromProducersMsg.getSender().getLocalName() , Double.valueOf(fromProducersMsg.getContent()));
         }else {
             block();
